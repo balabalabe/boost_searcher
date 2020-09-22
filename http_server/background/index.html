@@ -1,0 +1,185 @@
+<!DCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>航のboost文档搜索助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            /* 设置背景图 */
+            background-image: url(lin.jpg);
+            /* 让背景图不要重复平铺 */
+            background-repeat: no-repeat;
+            /* 让背景居中显示 */
+            background-position: center center;
+            /* 让背景随着窗口尺寸变化进行缩放 */
+            background-size: cover;
+        }
+
+        .container {
+            /* 设置宽度为 800 像素 */
+            width: 800px;
+            /* 设置高度为和父级元素一样高. 父级元素 body 标签, 和浏览器一样高的 */
+            height: 100%;
+            /* 水平居中, margin 是外边距. 0 表示上下外边距为 0 个像素, auto表示左右外边距为自动 */
+            margin: 0 auto;
+            /* 设置背景颜色, 看起来梦幻一点 */
+            background-color: rgba(255, 255, 255, 0.4);
+            /* 后面搜索的时候内容如果太多, 超出显示区域, 需要加上滚动条, 如果内容不超出, 就没有滚动条 */
+            overflow: auto;
+        }
+
+        .header {
+            height: 50px;
+            width: 100%;
+        }
+
+        /* 复合选择器, 结合了 类选择器 和 标签选择器 */
+        /* 选中了 header 类对应的标签里面的 input 标签 */
+        .header input {
+            float: left;
+            width: 600px;
+            height: 46px;
+            /* 设置输入框的字体大小 */
+            font-size: 22px;
+            /* 设置输入框的左内边距, 让文字和左侧边框之间有个距离 */
+            padding-left: 10px;
+            /* 去除输入框的右边框, 显的和按钮之间更紧凑一些 */
+            border-right: none;
+        }
+
+        .header button {
+            float: left;
+            width: 100px;
+            height: 50px;
+            font-size: 22px;
+            color: #fff;
+            background-color: rgb(50, 128, 255);
+        }
+
+        .item {
+            width: 100%;
+            /* 设置一个上外边距, 让搜索结果之间能够区分开 */
+            margin-top: 20px;
+        }
+
+        .item a {
+            /* a 标签默认是行内元素, 无法设置宽高, 先转换成块级元素 */
+            display: block;
+            height: 40px;
+            /* 让文字的行高等于元素高度, 就能实现文字的垂直居中 */
+            line-height: 40px;
+            font-size: 22px;
+            /* 让字体加粗. 值越大就越粗. 400 是普通情况 */
+            font-weight: 700;
+            /* 去掉下划线 */
+            text-decoration: none;
+        }
+
+        .item p {
+            font-size: 16px;
+            /* 设置字体颜色为 灰色 */
+            color: #333333;
+        }
+
+        .item i {
+            font-size: 16px;
+            font-style: normal;
+            color: rgb(0, 128, 0);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ctrl + / 触发 html 的注释 -->
+    <!-- container 表示内容的版心 -->
+    <div class="container">
+        <!-- header 放置最上面的搜索框 和 搜索按钮 -->
+        <div class="header">
+            <input type="text">
+            <button onclick="search()">搜索</button>
+        </div>
+        <!-- result 放置所有的搜索结果 -->
+        <div class="result">
+            <!-- 每一条搜索结果再使用一个 item 这样的 div 来表示 -->
+            <!-- <div class="item">
+                <a href="http://www.sogou.com">我是标题</a>
+                <p>我是描述</p>
+                <i>http://www.baidu.com</i>
+            </div> -->
+        </div>
+    </div>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.1.min.js"></script>
+    <script>
+        function search() {
+            // 1. 获取到输入框的内容
+            let query = $(".header input").val();
+            // alert("query: " + query);
+            // 2. 发送 HTTP 请求
+            //    type 表示 HTTP 请求的方法
+            //    url 表示要访问的路径
+            //    success 对应一个回调函数, 表示请求执行成功后(200), 就会自动执行到该回调函数. 
+            $.ajax({
+                type: "get",
+                url: "searcher?query=" + query,
+                success: function (data, status) {
+                    // 3. 根据返回结果来重新构造页面. 
+                    //    data 就是 HTTP 响应 body 部分. (JSON)
+                    //    status 暂时不用, 其实就是状态码
+                    buildResult(data);
+                }
+            });
+        }
+
+        function buildResult(data) {
+            // 根据返回的结果来构造页面
+            // 1. 获取到 result 对应的 div 标签, 用来存放最终结果. 
+            let result = $(".result");
+            // 2. 清空上次的结果, 清除 result 中所有的子标签. 
+            result.empty();
+            // 3. 遍历结果 data 数组, 分别构造页面内容
+            for (let item of data) {
+                // 构造页面内容了. 
+                // 先构造一个标题, a 标签
+                let title = $("<a>", {
+                    text: item.title,   // 这里的 title 是服务器返回的 JSON 数据中的字段
+                    href: item.url,
+                    target: "_blank",   // 点击时打开新的页面. 
+                });
+                // 再构造一个描述, p 标签
+                let desc = $("<p>", {
+                    text: item.desc
+                });
+                // 再构造一个展示 url, i 标签
+                let showUrl = $("<i>", {
+                    text: item.url
+                })
+                // 再构造一个 div 标签表示 item
+                let itemHtml = $("<div>", {
+                    class: "item",
+                });
+                // 把标题, 描述, url 添加到 item 标签中. 
+                title.appendTo(itemHtml);
+                desc.appendTo(itemHtml);
+                showUrl.appendTo(itemHtml);
+                // 最后把 itemHtml 添加到 result 标签中. 
+                itemHtml.appendTo(result);
+            }
+        }
+
+    </script>
+</body>
+
+</html>
+
